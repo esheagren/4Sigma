@@ -146,9 +146,6 @@ const BellCurveVisualization: React.FC<BellCurveVisualizationProps> = ({
         </g>
       </svg>
       
-      <div className="text-center mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-        Your confidence interval: {formatNumber(lowerBound)} - {formatNumber(upperBound)} {unit}
-      </div>
     </div>
   );
 };

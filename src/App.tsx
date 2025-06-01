@@ -4,7 +4,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import Header from './components/Header';
 import AboutPage from './pages/AboutPage';
 import DailyPlay from './pages/DailyPlay';
-import PracticeMode from './pages/PracticeMode';
+import PracticeMode from './pages/Explore';
 import ProfileDashboard from './pages/ProfileDashboard';
 import NotFound from './pages/NotFound';
 

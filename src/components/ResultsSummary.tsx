@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, XCircle, ChevronRight, Share2, Sparkles, Calculator, Info } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronRight, Share2, Calculator, Info } from 'lucide-react';
 import BellCurveVisualization from './BellCurveVisualization';
 import { GameResult } from '../types';
 import { useCountUp } from '../hooks/useCountUp';
@@ -40,10 +40,6 @@ const calculateStatistics = (results: GameResult[]): Statistics => {
 
 const ResultsSummary: React.FC<ResultsSummaryProps> = ({ result, historicalResults = [] }) => {
   const todayScore = useCountUp(Math.round(result.totalPoints));
-  const hasExactMatch = result.questionResults.some(
-    qr => qr.userAnswer.lowerBound === qr.userAnswer.upperBound && 
-         qr.userAnswer.lowerBound === qr.question.answer
-  );
 
   const allTimeStats = calculateStatistics([...historicalResults, result]);
   const todayStats = calculateStatistics([result]);
@@ -128,9 +124,6 @@ const ResultsSummary: React.FC<ResultsSummaryProps> = ({ result, historicalResul
       <div className="space-y-6 mb-8">
         <h3 className="text-lg font-medium">Question Breakdown</h3>
         {result.questionResults.map((qResult, index) => {
-          const isExactMatch = qResult.userAnswer.lowerBound === qResult.userAnswer.upperBound && 
-                             qResult.userAnswer.lowerBound === qResult.question.answer;
-          
           return (
             <div 
               key={index}

@@ -3,6 +3,9 @@ const express = require("express");
 const { createClient } = require("@supabase/supabase-js");
 const cors = require("cors");
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 const app = express();
 
 // Validate environment variables

@@ -49,10 +49,10 @@ app.get('/api/health', (req, res) => {
 // Questions endpoints
 app.get('/api/questions/daily', async (req, res) => {
   try {
+    // Since there's no is_daily column, return a random selection of questions for daily play
     const { data, error } = await supabase
       .from('questions')
       .select('*')
-      .eq('is_daily', true)
       .limit(10);
     
     if (error) throw error;

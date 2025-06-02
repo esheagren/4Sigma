@@ -2,18 +2,7 @@ import { Question, Category, CreateQuestionRequest, UpdateQuestionRequest, Quest
 
 // Environment-aware API configuration
 const getApiBaseUrl = () => {
-  // In development mode (Vite dev server)
-  if (import.meta.env.DEV) {
-    return 'http://localhost:3000/api';
-  }
-  
-  // In production mode (deployed)
-  if (typeof window !== 'undefined') {
-    // Browser environment - use relative path for same-origin requests
-    return '/api';
-  }
-  
-  // Fallback
+  // Always use relative path to leverage Vite's proxy
   return '/api';
 };
 

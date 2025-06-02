@@ -22,7 +22,9 @@ const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars);
   console.error('Please check your .env file or environment configuration.');
-  process.exit(1);
+  if (!isProduction) {
+    process.exit(1);
+  }
 }
 
 // Initialize Supabase client
@@ -31,14 +33,17 @@ export const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-console.log(`🚀 Starting server in ${process.env.NODE_ENV || 'development'} mode`);
-console.log(`📊 Supabase URL: ${process.env.SUPABASE_URL}`);
+// Only log in development
+if (isDevelopment) {
+  console.log(`🚀 Starting server in ${process.env.NODE_ENV || 'development'} mode`);
+  console.log(`📊 Supabase URL: ${process.env.SUPABASE_URL}`);
+}
 
 // CORS configuration
 const corsOptions = {
   origin: isDevelopment 
     ? ['http://localhost:5173', 'http://localhost:3000']
-    : ['https://www.4sig.xyz', 'https://4sig.xyz'],
+    : ['https://www.4sig.xyz', 'https://4sig.xyz', 'https://4-sigma.vercel.app'],
   credentials: true
 };
 
@@ -60,14 +65,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// For Vercel serverless functions
-export default app;
-
 // For local development
-if (!isProduction) {
+if (isDevelopment) {
   app.listen(port, () => {
     console.log(`✅ Server running on port ${port}`);
     console.log(`🌐 Local: http://localhost:${port}`);
     console.log(`🔗 Health check: http://localhost:${port}/api/health`);
   });
 }
+
+// Export for Vercel serverless functions
+export default app;

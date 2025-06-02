@@ -42,44 +42,6 @@ export const calculateScore = ({ lowerBound, upperBound, correctAnswer }) => {
 };
 
 /**
- * Submit a score to the database
- */
-export const submitScore = async (req, res) => {
-  const { userId, questionId, answer, correctAnswer } = req.body;
-  
-  try {
-    const score = calculateScore({
-      lowerBound: answer.lowerBound,
-      upperBound: answer.upperBound,
-      correctAnswer
-    });
-
-    const { data, error } = await supabase
-      .from('scores')
-      .insert([
-        {
-          user_id: userId,
-          question_id: questionId,
-          lower_bound: answer.lowerBound,
-          upper_bound: answer.upperBound,
-          correct_answer: correctAnswer,
-          score,
-          submitted_at: new Date()
-        }
-      ]);
-
-    if (error) throw error;
-    
-    res.json({
-      score,
-      data
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
  * Get user statistics including score distribution
  */
 export const getUserStats = async (req, res) => {
@@ -87,20 +49,19 @@ export const getUserStats = async (req, res) => {
   
   try {
     const { data, error } = await supabase
-      .from('scores')
+      .from('submissions')
       .select(`
         score,
         lower_bound,
         upper_bound,
-        correct_answer,
-        submitted_at,
+        created_at,
         questions (
-          text,
-          unit
+          prompt,
+          correct_answer
         )
       `)
       .eq('user_id', userId)
-      .order('submitted_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
@@ -114,13 +75,12 @@ export const getUserStats = async (req, res) => {
         fair: data.filter(s => s.score >= 50 && s.score < 70).length,
         poor: data.filter(s => s.score < 50).length
       },
-      recentScores: data.slice(0, 10).map(score => ({
-        score: score.score,
-        date: score.submitted_at,
-        question: score.questions.text,
-        unit: score.questions.unit,
-        interval: [score.lower_bound, score.upper_bound],
-        correctAnswer: score.correct_answer
+      recentScores: data.slice(0, 10).map(submission => ({
+        score: submission.score,
+        date: submission.created_at,
+        question: submission.questions.prompt,
+        interval: [submission.lower_bound, submission.upper_bound],
+        correctAnswer: submission.questions.correct_answer
       }))
     };
     

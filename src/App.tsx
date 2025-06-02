@@ -6,6 +6,7 @@ import AboutPage from './pages/AboutPage';
 import DailyPlay from './pages/DailyPlay';
 import PracticeMode from './pages/Explore';
 import ProfileDashboard from './pages/ProfileDashboard';
+import QuestionManagement from './pages/QuestionManagement';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -16,11 +17,12 @@ function App() {
           <Header />
           <main className="container mx-auto px-4 py-8">
             <Routes>
-              <Route path="/" element={<Navigate to="/daily\" replace />} />
+              <Route path="/" element={<Navigate to="/daily" replace />} />
               <Route path="/daily" element={<DailyPlay />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/practice" element={<PracticeMode />} />
               <Route path="/profile" element={<ProfileDashboard />} />
+              <Route path="/questions" element={<QuestionManagement />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

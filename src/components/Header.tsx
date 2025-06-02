@@ -22,6 +22,7 @@ const Header: React.FC = () => {
         <nav className="hidden md:flex items-center space-x-8">
           <NavLink to="/daily" active={location.pathname === '/daily'}>Daily Play</NavLink>
           <NavLink to="/practice" active={location.pathname === '/practice'}>Explore</NavLink>
+          <NavLink to="/questions" active={location.pathname === '/questions'}>Questions</NavLink>
           <NavLink to="/profile" active={location.pathname === '/profile'}>Profile</NavLink>
           <NavLink to="/about" active={location.pathname === '/about'}>About</NavLink>
         </nav>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, Calculator, BookmarkPlus } from 'lucide-react';
 import NumericRangeInput from './NumericRangeInput';
 import { Question, UserAnswer } from '../types';
@@ -19,6 +19,15 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const [lowerBound, setLowerBound] = useState<number | null>(null);
   const [upperBound, setUpperBound] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState<number>(Date.now());
+
+  // Reset start time when question changes
+  useEffect(() => {
+    setStartTime(Date.now());
+    setLowerBound(null);
+    setUpperBound(null);
+    setError(null);
+  }, [question.id]);
 
   const handleNumericInputChange = (lower: number | null, upper: number | null) => {
     setLowerBound(lower);
@@ -37,11 +46,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       return;
     }
     
+    const elapsedMs = Date.now() - startTime;
+    
     onSubmit({
       questionId: question.id,
       lowerBound,
       upperBound,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      elapsedMs
     });
   };
 

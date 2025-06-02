@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { router as questionsRouter } from './routes/questions.js';
 import { router as scoresRouter } from './routes/scores.js';
 import { router as usersRouter } from './routes/users.js';
+import { router as sessionsRouter } from './routes/sessions.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use(express.json());
 app.use('/api/questions', questionsRouter);
 app.use('/api/scores', scoresRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/sessions', sessionsRouter);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

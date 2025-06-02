@@ -1,102 +1,69 @@
-import { Question, Category } from '../types';
+import { Question, Category, CreateQuestionRequest, UpdateQuestionRequest, QuestionWithCreator } from '../types';
 
-// Mock data for development
-const mockQuestions: Question[] = [
-  {
-    id: '1',
-    text: 'What is the height of Mount Everest?',
-    answer: 8849,
-    unit: 'meters',
-    category: 'Geography'
-  },
-  {
-    id: '2',
-    text: 'What is the average distance from Earth to the Moon?',
-    answer: 384400,
-    unit: 'kilometers',
-    category: 'Science'
-  },
-  {
-    id: '3',
-    text: 'What is the population of Tokyo metropolitan area?',
-    answer: 37400000,
-    unit: 'people',
-    category: 'Geography'
-  },
-  {
-    id: '4',
-    text: 'What is the average human body temperature?',
-    answer: 37,
-    unit: 'degrees Celsius',
-    category: 'Science'
-  },
-  {
-    id: '5',
-    text: 'What was the GDP of Germany in 2022?',
-    answer: 4.07,
-    unit: 'trillion USD',
-    category: 'Economics'
-  },
-  {
-    id: '6',
-    text: 'What is the wingspan of a Boeing 747?',
-    answer: 68.5,
-    unit: 'meters',
-    category: 'Miscellaneous'
+const API_BASE_URL = '/api';
+
+// Helper to handle API responses
+const handleResponse = async (response: Response) => {
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
-];
-
-const mockCategories: Category[] = [
-  { 
-    id: 'science', 
-    name: 'Science', 
-    description: 'Scientific facts and discoveries', 
-    icon: 'flask' 
-  },
-  { 
-    id: 'geography', 
-    name: 'Geography', 
-    description: 'Countries, cities, and landmarks', 
-    icon: 'globe' 
-  },
-  { 
-    id: 'economics', 
-    name: 'Economics', 
-    description: 'Markets, finance, and economic data', 
-    icon: 'lineChart' 
-  },
-  { 
-    id: 'misc', 
-    name: 'Miscellaneous', 
-    description: 'Various interesting numerical facts', 
-    icon: 'brain' 
-  }
-];
-
-// Helper to simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-export const getDailyQuestions = async (): Promise<Question[]> => {
-  await delay(800);
-  const randomQuestions = [...mockQuestions].sort(() => 0.5 - Math.random()).slice(0, 3);
-  return randomQuestions;
+  return response.json();
 };
 
-export const getQuestions = async (): Promise<Question[]> => {
-  await delay(800);
-  return mockQuestions;
+export const getDailyQuestions = async (): Promise<Question[]> => {
+  const response = await fetch(`${API_BASE_URL}/questions/daily`);
+  return handleResponse(response);
+};
+
+export const getQuestions = async (includeCreator: boolean = false): Promise<Question[]> => {
+  const url = includeCreator 
+    ? `${API_BASE_URL}/questions?includeCreator=true`
+    : `${API_BASE_URL}/questions`;
+  const response = await fetch(url);
+  return handleResponse(response);
+};
+
+export const getQuestionsWithCreators = async (): Promise<QuestionWithCreator[]> => {
+  const response = await fetch(`${API_BASE_URL}/questions?includeCreator=true`);
+  return handleResponse(response);
 };
 
 export const getQuestionsByCategory = async (categoryId: string): Promise<Question[]> => {
-  await delay(800);
-  const categoryName = mockCategories.find(c => c.id === categoryId)?.name || '';
-  const filteredQuestions = mockQuestions.filter(
-    q => q.category.toLowerCase() === categoryName.toLowerCase()
-  );
-  return filteredQuestions.length > 0 ? filteredQuestions : mockQuestions.slice(0, 3);
+  const response = await fetch(`${API_BASE_URL}/questions?category=${categoryId}`);
+  return handleResponse(response);
+};
+
+export const getQuestionsByCreator = async (userId: string): Promise<QuestionWithCreator[]> => {
+  const response = await fetch(`${API_BASE_URL}/questions/creator/${userId}`);
+  return handleResponse(response);
 };
 
 export const getCategories = async (): Promise<Category[]> => {
-  await delay(600);
-  return mockCategories;
+  const response = await fetch(`${API_BASE_URL}/questions/categories`);
+  return handleResponse(response);
+};
+
+export const createQuestion = async (questionData: CreateQuestionRequest): Promise<Question> => {
+  const response = await fetch(`${API_BASE_URL}/questions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(questionData),
+  });
+  return handleResponse(response);
+};
+
+export const updateQuestion = async (
+  questionId: string, 
+  updateData: UpdateQuestionRequest
+): Promise<Question> => {
+  const response = await fetch(`${API_BASE_URL}/questions/${questionId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updateData),
+  });
+  return handleResponse(response);
 };

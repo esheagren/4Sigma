@@ -6,12 +6,13 @@ import { router as questionsRouter } from './routes/questions.js';
 import { router as scoresRouter } from './routes/scores.js';
 import { router as usersRouter } from './routes/users.js';
 import { router as sessionsRouter } from './routes/sessions.js';
+import { router as authRouter } from './routes/auth.js';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -42,7 +43,7 @@ if (isDevelopment) {
 // CORS configuration
 const corsOptions = {
   origin: isDevelopment 
-    ? ['http://localhost:5173', 'http://localhost:3000']
+    ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:3000', 'http://localhost:3001']
     : ['https://www.4sig.xyz', 'https://4sig.xyz', 'https://4-sigma.vercel.app'],
   credentials: true
 };
@@ -55,6 +56,7 @@ app.use('/api/questions', questionsRouter);
 app.use('/api/scores', scoresRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/sessions', sessionsRouter);
+app.use('/api/auth', authRouter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -1,27 +1,23 @@
 // Vercel serverless function entry point
-import express from 'express';
-import cors from 'cors';
-import { createClient } from '@supabase/supabase-js';
+const express = require("express");
+const { createClient } = require("@supabase/supabase-js");
+const cors = require("cors");
 
 const app = express();
 
-// Validate required environment variables
-const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
-
-if (missingEnvVars.length > 0) {
-  console.error('❌ Missing required environment variables:', missingEnvVars);
-  throw new Error(`Missing environment variables: ${missingEnvVars.join(', ')}`);
+// Validate environment variables
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+  console.error('Missing required environment variables: SUPABASE_URL or SUPABASE_ANON_KEY');
 }
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
 );
 
 // CORS configuration
-const corsOptions = {
+app.use(cors({
   origin: [
     'https://www.4sig.xyz', 
     'https://4sig.xyz', 
@@ -30,10 +26,12 @@ const corsOptions = {
     'http://localhost:3000'
   ],
   credentials: true
-};
+}));
 
-app.use(cors(corsOptions));
 app.use(express.json());
+
+// Root route
+app.get("/", (req, res) => res.send("4Sigma API on Vercel"));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -77,16 +75,9 @@ app.get('/api/questions/categories', async (req, res) => {
 
 app.get('/api/questions', async (req, res) => {
   try {
-    const includeCreator = req.query.includeCreator === 'true';
-    const category = req.query.category;
-    
-    let query = supabase.from('questions').select('*');
-    
-    if (category) {
-      query = query.eq('category', category);
-    }
-    
-    const { data, error } = await query;
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*');
     
     if (error) throw error;
     res.json(data || []);
@@ -101,4 +92,4 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
-export default app; 
+module.exports = app; 

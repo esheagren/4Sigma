@@ -27,6 +27,12 @@ app.use('/api/scores', scoresRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/sessions', sessionsRouter);
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// For Vercel serverless functions
+export default app;
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+}

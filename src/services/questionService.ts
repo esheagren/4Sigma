@@ -1,6 +1,7 @@
 import { Question, Category, CreateQuestionRequest, UpdateQuestionRequest, QuestionWithCreator } from '../types';
 
-const API_BASE_URL = '/api';
+// Use local server in development, relative path in production
+const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:3000/api' : '/api';
 
 // Helper to handle API responses
 const handleResponse = async (response: Response) => {

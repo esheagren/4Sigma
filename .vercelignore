@@ -3,7 +3,4 @@ server/
 .env.local
 .env.development
 node_modules/
-.git/
-vite.config.ts
-tsconfig.json
-index.html 
+.git/ 

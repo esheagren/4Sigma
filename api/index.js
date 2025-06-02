@@ -1,10 +1,11 @@
 // Vercel serverless function entry point
-const express = require("express");
-const { createClient } = require("@supabase/supabase-js");
-const cors = require("cors");
+import express from "express";
+import { createClient } from "@supabase/supabase-js";
+import cors from "cors";
+import dotenv from "dotenv";
 
 // Load environment variables from .env file
-require('dotenv').config();
+dotenv.config();
 
 const app = express();
 
@@ -95,4 +96,4 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
-module.exports = app; 
+export default app; 

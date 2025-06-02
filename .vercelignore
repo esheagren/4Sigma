@@ -1,5 +1,3 @@
-src/
-public/
 server/
 *.md
 .env.local

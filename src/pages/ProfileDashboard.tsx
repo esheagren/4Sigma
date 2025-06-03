@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { LineChart, Calendar, Award, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { GameResult } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 const ProfileDashboard: React.FC = () => {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [results, setResults] = useState<GameResult[]>([]);
   const [stats, setStats] = useState({
     totalGames: 0,
@@ -12,88 +14,67 @@ const ProfileDashboard: React.FC = () => {
     bestStreak: 0,
     totalPoints: 0
   });
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    // In a real app, we would check authentication status
-    const checkAuth = () => {
-      // Mock check - this would be replaced with actual auth check
-      const mockLoggedIn = localStorage.getItem('mockLoggedIn') === 'true';
-      setIsLoggedIn(mockLoggedIn);
-      
-      if (mockLoggedIn) {
-        loadUserData();
-      }
-    };
-    
-    checkAuth();
-  }, []);
+    if (isAuthenticated && user) {
+      loadUserData();
+    }
+  }, [isAuthenticated, user]);
 
-  const loadUserData = () => {
-    // Mock data loading - in a real app, this would fetch from a backend
-    const savedResults = localStorage.getItem('gameResults');
-    if (savedResults) {
-      const parsedResults = JSON.parse(savedResults) as GameResult[];
-      setResults(parsedResults);
-      
-      // Calculate stats
-      if (parsedResults.length > 0) {
-        const totalGames = parsedResults.length;
-        const totalCorrect = parsedResults.reduce((sum, game) => sum + game.correctAnswers, 0);
-        const totalQuestions = parsedResults.reduce((sum, game) => sum + game.totalQuestions, 0);
-        const averageAccuracy = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
-        const totalPoints = parsedResults.reduce((sum, game) => sum + game.totalPoints, 0);
+  const loadUserData = async () => {
+    try {
+      // Fetch user stats from the API
+      const response = await fetch(`/api/scores/stats/${user?.id}`);
+      if (response.ok) {
+        const userStats = await response.json();
         
-        // Calculate streak
-        let currentStreak = 0;
-        let bestStreak = 0;
-        const sortedResults = [...parsedResults].sort((a, b) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        
-        // This is a simplified streak calculation
-        for (const result of sortedResults) {
-          if (result.correctAnswers > 0) {
-            currentStreak++;
-            bestStreak = Math.max(bestStreak, currentStreak);
-          } else {
-            break;
-          }
-        }
-        
+        // Transform API data to match our stats structure
         setStats({
-          totalGames,
-          averageAccuracy,
-          currentStreak,
-          bestStreak,
-          totalPoints
+          totalGames: userStats.totalAttempts || 0,
+          averageAccuracy: userStats.averageScore || 0,
+          currentStreak: 0, // You might want to add this to your API
+          bestStreak: 0, // You might want to add this to your API
+          totalPoints: Math.round(userStats.averageScore * userStats.totalAttempts) || 0
         });
+
+        // Transform recent scores to game results format
+        if (userStats.recentScores) {
+          const gameResults: GameResult[] = userStats.recentScores.map((score: any) => ({
+            date: score.date,
+            totalPoints: Math.round(score.score),
+            correctAnswers: score.score > 50 ? 1 : 0, // Simple heuristic
+            totalQuestions: 1,
+            questionResults: []
+          }));
+          setResults(gameResults);
+        }
       }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      // Fallback to mock data for development
+      loadMockData();
     }
   };
 
-  const handleMockLogin = () => {
-    localStorage.setItem('mockLoggedIn', 'true');
-    setIsLoggedIn(true);
-    
-    // Create some mock data
+  const loadMockData = () => {
+    // Fallback mock data for development
     const mockResults: GameResult[] = [
       {
-        date: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+        date: new Date(Date.now() - 86400000).toISOString(),
         totalPoints: 245,
         correctAnswers: 2,
         totalQuestions: 3,
         questionResults: []
       },
       {
-        date: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+        date: new Date(Date.now() - 172800000).toISOString(),
         totalPoints: 180,
         correctAnswers: 3,
         totalQuestions: 3,
         questionResults: []
       },
       {
-        date: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+        date: new Date(Date.now() - 259200000).toISOString(),
         totalPoints: 120,
         correctAnswers: 1,
         totalQuestions: 3,
@@ -101,11 +82,38 @@ const ProfileDashboard: React.FC = () => {
       }
     ];
     
-    localStorage.setItem('gameResults', JSON.stringify(mockResults));
-    loadUserData();
+    setResults(mockResults);
+    
+    // Calculate stats from mock data
+    const totalGames = mockResults.length;
+    const totalCorrect = mockResults.reduce((sum, game) => sum + game.correctAnswers, 0);
+    const totalQuestions = mockResults.reduce((sum, game) => sum + game.totalQuestions, 0);
+    const averageAccuracy = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
+    const totalPoints = mockResults.reduce((sum, game) => sum + game.totalPoints, 0);
+    
+    setStats({
+      totalGames,
+      averageAccuracy,
+      currentStreak: 2,
+      bestStreak: 3,
+      totalPoints
+    });
   };
 
-  if (!isLoggedIn) {
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <h1 className="text-3xl font-bold mb-6">Profile Dashboard</h1>
+        <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-md max-w-md w-full">
+          <p className="text-neutral-600 dark:text-neutral-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show sign-in prompt if not authenticated
+  if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <h1 className="text-3xl font-bold mb-6">Profile Dashboard</h1>
@@ -115,10 +123,7 @@ const ProfileDashboard: React.FC = () => {
             Track your progress, view statistics, and compare your performance with others.
           </p>
           <div className="space-y-4">
-            <button 
-              onClick={handleMockLogin}
-              className="w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-colors flex items-center justify-center gap-2"
-            >
+            <button className="w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-colors flex items-center justify-center gap-2">
               <span>Sign in with GitHub</span>
             </button>
             <button className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors flex items-center justify-center gap-2">
@@ -133,6 +138,9 @@ const ProfileDashboard: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-2">Your Profile</h1>
+      <p className="text-neutral-600 dark:text-neutral-300 mb-2">
+        Welcome back, {user?.displayName || user?.username}!
+      </p>
       <p className="text-neutral-600 dark:text-neutral-300 mb-8">
         Track your progress and view your statistics
       </p>
@@ -180,19 +188,19 @@ const ProfileDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
               <PerformanceMetric 
                 title="Question Accuracy" 
-                value="68%" 
+                value={`${stats.averageAccuracy.toFixed(0)}%`}
                 change="+5%" 
                 isPositive={true} 
               />
               <PerformanceMetric 
-                title="Avg. Interval Width" 
-                value="43.2" 
+                title="Avg. Score" 
+                value={stats.averageAccuracy.toFixed(1)}
                 change="-2.8" 
                 isPositive={true} 
               />
               <PerformanceMetric 
-                title="Points per Game" 
-                value="183" 
+                title="Total Attempts" 
+                value={stats.totalGames.toString()}
                 change="+12" 
                 isPositive={true} 
               />
@@ -201,48 +209,27 @@ const ProfileDashboard: React.FC = () => {
         </TabsContent>
         
         <TabsContent value="history" className="animate-fadeIn">
-          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Recent Games
-              </h2>
-            </div>
-            <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
-              {results.length > 0 ? (
-                results.map((result, index) => (
-                  <div key={index} className="p-4 hover:bg-neutral-50 dark:hover:bg-neutral-750 transition-colors">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">
-                          {new Date(result.date).toLocaleDateString(undefined, {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </p>
-                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                          Score: {result.correctAnswers}/{result.totalQuestions} correct
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-xl text-primary-600 dark:text-primary-400">
-                          {result.totalPoints}
-                        </p>
-                        <p className="text-sm text-neutral-600 dark:text-neutral-400">points</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-8 text-center">
-                  <p className="text-neutral-600 dark:text-neutral-400">
-                    No game history available yet. Play your first game to see results here!
-                  </p>
-                </div>
-              )}
-            </div>
+          <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Recent Games
+            </h2>
+            {results.length > 0 ? (
+              <div className="space-y-3">
+                {results.map((result, index) => (
+                  <GameHistoryItem key={index} result={result} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-neutral-500 dark:text-neutral-400 mb-4">
+                  No games played yet
+                </p>
+                <p className="text-sm text-neutral-400 dark:text-neutral-500">
+                  Start playing to see your game history here
+                </p>
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>
@@ -283,6 +270,38 @@ const PerformanceMetric: React.FC<PerformanceMetricProps> = ({ title, value, cha
       <p className={`text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
         {change} {isPositive ? '▲' : '▼'}
       </p>
+    </div>
+  );
+};
+
+interface GameHistoryItemProps {
+  result: GameResult;
+}
+
+const GameHistoryItem: React.FC<GameHistoryItemProps> = ({ result }) => {
+  return (
+    <div className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-750 transition-colors">
+      <div className="flex justify-between items-center">
+        <div>
+          <p className="font-medium">
+            {new Date(result.date).toLocaleDateString(undefined, {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            })}
+          </p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Score: {result.correctAnswers}/{result.totalQuestions} correct
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="font-bold text-xl text-primary-600 dark:text-primary-400">
+            {result.totalPoints}
+          </p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">points</p>
+        </div>
+      </div>
     </div>
   );
 };
